@@ -1,0 +1,19 @@
+# CCA CTRL
+.cookie
+
+# Vi
+*.bak
+*.swp
+
+# VS Code
+.vs
+.vscode
+.DS_Store
+*.log
+*.mdproj
+*.sln
+*.srl
+
+# Misc ignored files
+._*
+

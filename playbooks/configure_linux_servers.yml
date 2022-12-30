@@ -1,0 +1,46 @@
+# Playbook to configure linux servers
+#
+# REPO_TYPE=infra
+# MENU_DESC=Configure linux server to work with CCA and Splunk Enterprise
+# VARS=hide_password(true)
+
+# Configure all servers
+- name: Configure all splunk_servers
+  hosts: splunk_servers:!localhost
+  become: true
+  become_method: sudo
+  strategy: linear
+  pre_tasks:
+    - name: Include role for cca.core.linux
+      ansible.builtin.include_role:
+        name: cca.core.linux
+
+- name: Reboot servers in availability group 1
+  hosts: splunk_servers:&ag1:!localhost
+  become: true
+  become_method: sudo
+  pre_tasks:
+    - name: Include task for reboot handler
+      ansible.builtin.include_role:
+        name: cca.core.linux
+        tasks_from: server_reboot_handler.yml
+
+- name: Reboot servers in availability group 2
+  hosts: splunk_servers:&ag2:!localhost
+  become: true
+  become_method: sudo
+  pre_tasks:
+    - name: Include task for reboot handler
+      ansible.builtin.include_role:
+        name: cca.core.linux
+        tasks_from: server_reboot_handler.yml
+
+- name: Reboot servers in availability group 3
+  hosts: splunk_servers:&ag3:!localhost
+  become: true
+  become_method: sudo
+  pre_tasks:
+    - name: Include task for reboot handler
+      ansible.builtin.include_role:
+        name: cca.core.linux
+        tasks_from: server_reboot_handler.yml

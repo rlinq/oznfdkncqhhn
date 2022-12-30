@@ -1,0 +1,75 @@
+---
+# tasks file for cca.common.setup-wizard
+#
+# Description:
+#
+# Prerequisite:
+#
+# Author: André Enemark
+#
+# Release: 2022.3.1
+
+- ansible.builtin.set_fact:
+   cca_splunk_secret_path: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all"
+
+- ansible.builtin.set_fact:
+   cca_splunk_secret_file: "{{ cca_splunk_secret_path }}/cca_splunk_secrets"
+
+- ansible.builtin.set_fact:
+    vault_path: "{{ user_home }}/secrets"
+
+- ansible.builtin.set_fact:
+    vault_secret: "{{ ansible_env.ANSIBLE_VAULT_PASSWORD_FILE }}"
+
+- name: Check for first run wizard
+  ansible.builtin.stat:
+    path: "{{ vault_secret }}"
+  register: stat_wizard_vault_secret
+
+- name: Ensure that the secret file exists
+  ansible.builtin.assert:
+    that:
+      - stat_wizard_vault_secret.stat.exists
+    fail_msg: >-
+      We couldn't find the ansible vault secret. Please check you
+      env variable ANSIBLE_VAULT_PASSWORD_FILE is set correctly
+
+- name: Check for first run wizard
+  ansible.builtin.stat:
+    path: "{{ cca_splunk_secret_file }}"
+  register: stat_cca_splunk_secret_file
+
+- ansible.builtin.debug:
+    var: stat_cca_splunk_secret_file
+    verbosity: 1
+
+- name: Check for first run wizard
+  ansible.builtin.stat:
+    path: "{{ cca_splunk_secret_path }}"
+  register: stat_cca_splunk_secret_path
+
+- name: Create environment directory
+  ansible.builtin.file:
+    path: "{{ cca_splunk_secret_path }}"
+    state: directory
+    recurse: yes
+  when: not stat_cca_splunk_secret_path.stat.exists
+
+- name: Create the file, if it doesn't exist already
+  ansible.builtin.file:
+    path: "{{ cca_splunk_secret_file }}"
+    state: touch
+  when:
+    - not stat_cca_splunk_secret_file.stat.exists
+
+- name: Create a onboarding secrets file
+  ansible.builtin.file:
+    path: "{{ onboarding_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"
+    state: touch
+
+- name: Include wizard vars.
+  ansible.builtin.include_vars:
+    file: "{{ cca_splunk_secret_file }}"
+    name: vars_current_wizard
+  when:
+    - stat_cca_splunk_secret_file.stat.exists

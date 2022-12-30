@@ -1,0 +1,43 @@
+---
+# tasks file for cca.core.linux
+#
+# Description:
+#
+# Prerequisite:
+#
+# Author: Roger Lindquist (github.com/rlinq)
+#
+# Release: 2022.3.1
+- name: Include role to check if there is a pending reboot
+  ansible.builtin.include_tasks: check_pending_actions.yml
+  when:
+    - not cca_skip_server_reboot | default(false)
+
+- name: Control service during server reboot and reboot server if required
+  block:
+    - name: Stop splunk service and disable it
+      ansible.builtin.systemd:
+        name: Splunkd.service
+        state: stopped
+        enabled: false
+
+    - name: Reboot the server based on notification state and wait for it to come back
+      ansible.builtin.reboot:
+        reboot_timeout: 1200
+        post_reboot_delay: 30
+      register: server_reboot_status
+
+    - name: Enable Splunkd service after successful reboot
+      ansible.builtin.systemd:
+        name: Splunkd.service
+        enabled: true
+        daemon_reload: true
+
+    - name: Delete statefile based on reboot status
+      ansible.builtin.file:
+        path: "{{ server_reboot_pending | default('/tmp/server_reboot.pending') }}"
+        state: 'absent'
+      when:
+        - server_reboot_status.rebooted
+  when:
+    - stat_server_reboot_pending.stat.exists | default(false)

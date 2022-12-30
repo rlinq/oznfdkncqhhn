@@ -1,0 +1,128 @@
+# MENU_DESC=Setup Wizard
+# REPO_TYPE=main
+# EXTRA_VARS=
+- name: Wizard - Setup and aid user to copy and create necessary directories
+  hosts: localhost
+  connection: local
+# TODO: Add function to add secrets using the same secret
+# TODO: Prompt for reusing, recreating or adding a new vault secret.
+
+  vars:
+    cca_splunk_var_tmp: "/var/tmp/"
+    user_home: "{{ ansible_env.HOME }}"
+    script_cwd: "{{ ansible_env.PWD | replace('/playbooks','') }}"
+    pwd_array: "{{ script_cwd.split('/') }}"
+    repo_base: "{{ pwd_array[:-1] | join('/') }}"
+    splunk_enterprise_version: "8.2.9"
+
+    cca_environment:
+      default_infra_repo_name: 'cca_splunk_infrastructure'
+      default_onboarding_repo_name: 'cca_splunk_onboarding'
+      default_repo_base_path: "{{ repo_base }}"
+      default_environment_dir: 'cca_lab'
+      repo_base_dir: "development/repos"
+      repo_name: "cca_for_splunk"
+      random_splunk_secret: "{{ lookup('community.general.random_string', base64=True, length=254) }}"
+      cca_splunk_secrets:
+        - cca_splunk_server_general: "pass4SymmKey"
+        - cca_splunk_certs_server: "sslpassword"
+        - cca_splunk_certs_server_default: "sslpassword"
+        - cca_splunk_certs_inputs: "sslpassword"
+        - cca_splunk_certs_outputs: "sslpassword"
+        - cca_splunk_certs_web: "sslpassword"
+        - cca_splunk_cluster_c1: "pass4SymmKey"
+        - cca_splunk_shcluster_c1: "pass4SymmKey"
+      cca_splunk_secrets_no_prompt:
+        - cca_splunk_cluster_c2: "pass4SymmKey"
+        - cca_splunk_cluster_c3: "pass4SymmKey"
+        - cca_splunk_cluster_c4: "pass4SymmKey"
+        - cca_splunk_cluster_c5: "pass4SymmKey"
+        - cca_splunk_cluster_c6: "pass4SymmKey"
+        - cca_splunk_cluster_c7: "pass4SymmKey"
+        - cca_splunk_cluster_c8: "pass4SymmKey"
+        - cca_splunk_cluster_c9: "pass4SymmKey"
+        - cca_splunk_shcluster_c2: "pass4SymmKey"
+        - cca_splunk_shcluster_c3: "pass4SymmKey"
+        - cca_splunk_shcluster_c4: "pass4SymmKey"
+        - cca_splunk_shcluster_c5: "pass4SymmKey"
+        - cca_splunk_shcluster_c6: "pass4SymmKey"
+        - cca_splunk_shcluster_c7: "pass4SymmKey"
+        - cca_splunk_shcluster_c8: "pass4SymmKey"
+        - cca_splunk_shcluster_c9: "pass4SymmKey"
+
+  pre_tasks:
+
+    - name: Run setup
+      ansible.builtin.setup:
+
+    - name: Set sed command for linux/OSx
+      ansible.builtin.set_fact:
+        sed_cmd: "{% if ansible_os_family == 'Darwin' %}gsed{% else %}sed{% endif %}"
+
+    - name: Prompt for initial names
+      ansible.builtin.include_role:
+        name: cca.common.setup-wizard
+        tasks_from:
+          collect_values.yml
+
+    - name: Prompt for initial names
+      ansible.builtin.include_role:
+        name: cca.common.setup-wizard
+        tasks_from:
+          setup_directories.yml
+
+  tasks:
+
+    # return stat_wizard_vault_secret, vars_current_wizard
+    - name: Wizard status
+      ansible.builtin.include_role:
+        name: cca.common.setup-wizard
+        tasks_from: wizard_status.yml
+
+    - name: Set fact that the current splunk secret is the secret found in cca_splunk_secret_file
+      ansible.builtin.set_fact:
+        cca_identical: "{{ true if splunk_secret == cca_splunk_secret | default('') }}"
+
+    - name: Instantiate cli user, password and password hash
+      ansible.builtin.include_role:
+        name: cca.common.setup-wizard
+        tasks_from: create_user_seed.yml
+
+    - name: Instantiate general pass4SymmKeys and ssl passwords
+      ansible.builtin.include_role:
+        name: cca.common.setup-wizard
+        tasks_from: generate_secrets.yml
+      loop_control:
+        loop_var: secret_type
+      with_items:
+        - "{{ cca_environment.cca_splunk_secrets }}"
+
+    - name: Instantiate cluster specific pass4SymmKeys
+      ansible.builtin.include_role:
+        name: cca.common.setup-wizard
+        tasks_from: generate_secrets_no_prompt.yml
+      loop_control:
+        loop_var: secret_type
+      with_items:
+        - "{{ cca_environment.cca_splunk_secrets_no_prompt }}"
+
+    - name: Vault the splunk secret
+      ansible.builtin.set_fact:
+        vault_secret: "{{ splunk_secret | vault(lookup('ansible.builtin.file', ansible_env.ANSIBLE_VAULT_PASSWORD_FILE)) | split() | join('\\r\\n') | regex_replace('1.2;AES256;filter_default', '1.1;AES256') }}"
+
+    - name: Save the clear text secret as an ansible vault in infra repo
+      ansible.builtin.lineinfile:
+        path: "{{ vars.cca_splunk_secret_file }}"
+        line: 'cca_splunk_secret: !vault "{{ vault_secret }}"'
+        regex: '^cca_splunk_secret:'
+
+    - name: Get checksum of splunk secret
+      ansible.builtin.shell:
+        cmd: "echo -n {{ splunk_secret }} | sha256sum | awk '{ print $1 }'"
+      register: splunk_secret_checksum
+
+    - name: Store checksum of the splunk.secret file
+      ansible.builtin.lineinfile:
+        path: "{{ vars.cca_splunk_secret_file }}"
+        line: "cca_splunk_secret_sha256: '{{ splunk_secret_checksum.stdout }}'"
+        regex: '^cca_splunk_secret_sha256:'

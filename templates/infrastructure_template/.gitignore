@@ -1,0 +1,27 @@
+# CCA CTRL
+.cookie
+
+# VI
+*.bak
+*.swp
+
+# Terraform
+.terraform
+*lock.hcl
+plan.tfplan
+
+# Python
+__pycache__
+*.pyc
+
+# VS Code
+.vs
+.vscode
+.DS_Store
+*.log
+*.mdproj
+*.sln
+*.srl
+
+# Misc ignored files
+._*
