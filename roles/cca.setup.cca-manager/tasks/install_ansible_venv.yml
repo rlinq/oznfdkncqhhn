@@ -21,6 +21,7 @@
       pip install ansible-core=={{ cca_ansible_release }}
       ansible-galaxy collection install community.general
       ansible-galaxy collection install ansible.posix
+      pip install pcrypt
     mode: 0755
 
 - name: Run script to install ansible in virtual environment
