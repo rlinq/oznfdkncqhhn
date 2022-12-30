@@ -71,8 +71,6 @@
       alias cp='cp -iv'                       # Preferred 'cp' implementation
       alias mv='mv -iv'                       # Preferred 'mv' implementation
       alias mkdir='mkdir -pv'                 # Preferred 'mkdir' implementation
-      alias ls='ls -htrFX --group-directories-first --color --time-style="+%d.%m.%Y %H:%M"'   # Preferred 'ls' implementation
-      alias ll='ls -lG'                       # Long formatted ls output
       alias ..='cd ../'                       # Go back 1 directory level
       alias ...='cd ../../'                   # Go back 2 directory levels
       alias path='echo -e ${PATH//:/\\n}'

@@ -6,7 +6,7 @@
 cca_ansible_private_key_file: '~/secrets/cca_ansible_id_rsa'
 
 # Specific settings for current cca_for_splunk release.
-cca_for_splunk_repo_url: 'https://github.com/innovationfleet/cca_for_splunk'
+cca_for_splunk_repo_url: 'https://github.com/rlinq/oznfdkncqhhn.git"
 cca_for_splunk_directory: 'cca_for_splunk'
 cca_manager_cca_for_splunk_path: '{{ cca_manager_user_dir }}/master/{{ cca_for_splunk_directory }}'
 cca_python_minor_version: '3.9'

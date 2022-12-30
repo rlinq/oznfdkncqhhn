@@ -31,7 +31,7 @@ trap "exit 1" TERM
 export ProcessPid=$$
 
 # Get current dir, path and script name
-ScriptPath=$(readlink -e "$(dirname "${BASH_SOURCE[0]}")")
+ScriptPath=$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")
 DirName=$(basename "$ScriptPath")
 ScriptName=${0##*/}
 
