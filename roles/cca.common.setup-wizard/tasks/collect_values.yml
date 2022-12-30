@@ -34,7 +34,7 @@
 
 - name: Set onboarding repo path
   ansible.builtin.set_fact:
-    onboarding_repo_path: "{{ repo_base_path +' /' + cca_environment.default_onboarding_repo_name if wizard_onboarding_repo_path.user_input | length == 0 else repo_base_path + '/' + wizard_onboarding_repo_path.user_input }}"
+    onboarding_repo_path: "{{ repo_base_path + '/' + cca_environment.default_onboarding_repo_name if wizard_onboarding_repo_path.user_input | length == 0 else repo_base_path + '/' + wizard_onboarding_repo_path.user_input }}"
 
 - name: Check uniqueness of infra and onboarding directory
   ansible.builtin.assert:
