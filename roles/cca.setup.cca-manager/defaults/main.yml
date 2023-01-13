@@ -13,7 +13,7 @@ cca_python_minor_version: '3.9'
 cca_python_release: '3.9.10'
 cca_ansible_minor_version: '2.12'
 cca_ansible_release: '2.12.5'
-cca_manager_user_dir: "{{ ansible_facts.user_dir + cca_docker_mount_dir | default(Null)
+cca_manager_user_dir: "{{ ansible_facts.user_dir + cca_docker_mount_dir | default(null)
                        if
                          cca_docker_mount_dir is defined
                        else
@@ -23,10 +23,10 @@ cca_manager_tools_directories:
   - "{{ cca_manager_user_dir }}/tools/python-venv"
   - "{{ cca_manager_user_dir }}/tools/mitogen"
 cca_manager_directories:
-  - "{{ cca_manager_user_dir }}{{ cca_docker_mount_dir | default(Null) }}/secrets"
-  - "{{ cca_manager_user_dir }}{{ cca_docker_mount_dir | default(Null) }}/master"
+  - "{{ cca_manager_user_dir }}{{ cca_docker_mount_dir | default(null) }}/secrets"
+  - "{{ cca_manager_user_dir }}{{ cca_docker_mount_dir | default(null) }}/master"
 
-cca_manager_ansible_vault_secret_path: '~{{ cca_docker_mount_dir | default(Null) }}/secrets/cca_ansible_vault_secret'
+cca_manager_ansible_vault_secret_path: '~{{ cca_docker_mount_dir | default(null) }}/secrets/cca_ansible_vault_secret'
 cca_ansible_roles_path: "{{ './roles:~/clones/cca_for_splunk/roles'
                          if
                             cca_docker_mount_dir is defined
