@@ -9,3 +9,12 @@
         gather_subset: 'network'
     - include_role:
         name: ./roles/cca.setup.cca-manager
+      when:
+        - not cca_docker_mount_dir | default(false)
+
+    - include_role:
+        name: ./roles/cca.setup.cca-manager
+        tasks_from:
+          pre_configure_cca_manager_user.yml
+      when:
+        - cca_docker_mount_dir | default(false)
