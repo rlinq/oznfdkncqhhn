@@ -72,8 +72,3 @@
 
       fi
     mode: 400
-
-- name: Get python path
-  ansible.builtin.command:
-    cmd: "which python{{ cca_python_minor_version }}"
-  register: result_python_path

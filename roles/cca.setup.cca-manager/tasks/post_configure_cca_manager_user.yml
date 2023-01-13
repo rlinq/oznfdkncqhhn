@@ -40,6 +40,11 @@
     path: "{{ cca_manager_user_dir }}.profile_local"
     state: 'touch'
 
+- name: Get python path
+  ansible.builtin.command:
+    cmd: "which python{{ cca_python_minor_version }}"
+  register: result_python_path
+
 - name: Add settings to .profile_local for CCA usage
   ansible.builtin.lineinfile:
     dest: "{{ cca_manager_user_dir }}.profile_local"
