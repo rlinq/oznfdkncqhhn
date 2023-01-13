@@ -10,11 +10,11 @@
     - include_role:
         name: ./roles/cca.setup.cca-manager
       when:
-        - not post_docker_config is defined
+        - not post_docker_setup is defined
 
     - include_role:
         name: ./roles/cca.setup.cca-manager
         tasks_from:
-          pre_configure_cca_manager_user.yml
+          post_configure_cca_manager_user.yml
       when:
-        - post_docker_config is defined
+        - post_docker_setup is defined
