@@ -60,15 +60,15 @@
       alias grep='grep --color=auto'
 
       # If a user has a .profile_local source it
-      if [[ -f ~/{{ cca_docker_mount_dir | default(null) }}.profile_local ]]; then
+      if [[ -f ~/{{ cca_docker_mount_dir | default(none) }}.profile_local ]]; then
 
-        source ~/{{ cca_docker_mount_dir | default(null) }}.profile_local
+        source ~/{{ cca_docker_mount_dir | default(none) }}.profile_local
 
       fi
 
-      if [[ -f ~/{{ cca_docker_mount_dir | default(null) }}.bashrc ]]; then
+      if [[ -f ~/{{ cca_docker_mount_dir | default(none) }}.bashrc ]]; then
 
-        source ~/{{ cca_docker_mount_dir | default(null) }}.bashrc
+        source ~/{{ cca_docker_mount_dir | default(none) }}.bashrc
 
       fi
     mode: 400
