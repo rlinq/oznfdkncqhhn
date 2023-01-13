@@ -27,7 +27,7 @@ cca_manager_directories:
   - "{{ cca_manager_user_dir }}secrets"
   - "{{ cca_manager_user_dir }}master"
 
-cca_manager_ansible_vault_secret_path: '~{{ cca_docker_mount_dir | default(null) }}secrets/cca_ansible_vault_secret'
+cca_manager_ansible_vault_secret_path: '~/{{ cca_docker_mount_dir | default(null) }}secrets/cca_ansible_vault_secret'
 cca_ansible_roles_path: "{{ './roles:~/clones/cca_for_splunk/roles'
                          if
                             post_docker_setup is defined
