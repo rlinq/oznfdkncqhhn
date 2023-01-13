@@ -7,13 +7,7 @@
 #
 # Author: Roger Lindquist (github.com/rlinq)
 #
-# Release: 2022.3.1
-
-- name: Set fact for cca_manager_user_dir
-  ansible.builtin.set_fact:
-    cca_manager_user_dir: "{{ ansible_facts.user_dir }}"
-  when:
-    cca_manager_user_dir is not defined
+# Release: 2023.1.1
 
 - name: Set fact for cca_manager_ansible_vault_secret_path
   ansible.builtin.set_fact:
@@ -21,7 +15,7 @@
   when:
     cca_manager_ansible_vault_secret_path is not defined
 
-- name: Create user directories on cca manager
+- name: Create directories on cca manager
   ansible.builtin.file:
     path: "{{ directory }}"
     state: 'directory'
@@ -40,60 +34,6 @@
     cmd: "openssl rand -hex 32 >> {{ cca_manager_ansible_vault_secret_path }}"
   when:
     - not stat_vault_secret.stat.exists
-
-- name: Generate a .profile for the user
-  ansible.builtin.copy:
-    dest: "{{ cca_manager_user_dir }}/.profile"
-    backup: true
-    content: |
-      ###############################
-      # enable option with better support window resizing
-      shopt -s checkwinsize
-
-      ###############################
-
-      # prompt setting:
-      GREEN="\[\e[0;32m\]"
-      NONE="\[\e[0;0m\]"
-
-      PS1="${GREEN}\u${NONE}@${GREEN}\h: ${NONE}\w${GREEN} \$ ${NONE}"
-      export PS1
-
-      ###############################
-
-      # settings for history:
-      export PROMPT_COMMAND='echo "$(date "+%Y-%m-%d %H:%M:%S") $(logname):${PWD} $(history 1)" >> ~/.bash-history-$(date "+%Y-%m-%d").log'
-      export HISTCONTROL="ignoreboth"
-
-      ###############################
-
-      # aliases:
-      alias cp='cp -iv'                       # Preferred 'cp' implementation
-      alias mv='mv -iv'                       # Preferred 'mv' implementation
-      alias mkdir='mkdir -pv'                 # Preferred 'mkdir' implementation
-      alias ..='cd ../'                       # Go back 1 directory level
-      alias ...='cd ../../'                   # Go back 2 directory levels
-      alias path='echo -e ${PATH//:/\\n}'
-      alias grep='grep --color=auto'
-
-      # If a user has a .profile_local source it
-      if [[ -f ~/.profile_local ]]; then
-
-        source ~/.profile_local
-
-      fi
-
-      if [[ -f ~/.bashrc ]]; then
-
-        source ~/.bashrc
-
-      fi
-    mode: 400
-
-- name: Get python path
-  ansible.builtin.command:
-    cmd: "which python{{ cca_python_minor_version }}"
-  register: result_python_path
 
 - name: Touch file to ensure it exists
   ansible.builtin.file:
@@ -131,4 +71,3 @@
     backup: true
   with_items:
     - { regex: '^\[ -f ~/.profile', value: '[ -f ~/.profile ] && source ~/.profile' }
-
