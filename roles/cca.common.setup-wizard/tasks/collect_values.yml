@@ -22,7 +22,7 @@
 
 - name: Set infra repo path
   ansible.builtin.set_fact:
-    infra_repo_path: "{{ cca_infra_repo_base_path + '/' + cca_environment.default_infra_repo_name if wizard_infra_repo_name.user_input | length == 0 else cca_infra_repo_base_path + '/' + wizard_infra_repo_name.user_input }}"
+    infra_repo_path: "{{ cca_environment.cca_infra_repo_base_path + '/' + cca_environment.default_infra_repo_name if wizard_infra_repo_name.user_input | length == 0 else cca_environment.cca_infra_repo_base_path + '/' + wizard_infra_repo_name.user_input }}"
 
 - ansible.builtin.set_fact:
     absolute_infra_repo_path: "{{ infra_repo_path }}"
@@ -34,7 +34,7 @@
 
 - name: Set onboarding repo path
   ansible.builtin.set_fact:
-    onboarding_repo_path: "{{ cca_onboarding_repo_base_path + '/' + cca_environment.default_onboarding_repo_name if wizard_onboarding_repo_name.user_input | length == 0 else cca_onboarding_repo_base_path + '/' + wizard_onboarding_repo_name.user_input }}"
+    onboarding_repo_path: "{{ cca_environment.cca_onboarding_repo_base_path + '/' + cca_environment.default_onboarding_repo_name if wizard_onboarding_repo_name.user_input | length == 0 else cca_environment.cca_onboarding_repo_base_path + '/' + wizard_onboarding_repo_name.user_input }}"
 
 - name: Check uniqueness of infra and onboarding directory
   ansible.builtin.assert:
