@@ -3,7 +3,7 @@
 
 # Unique SSH key file that must match and work against the Splunk infrastructure
 # servers. Update the name if needed.
-cca_ansible_private_key_file: '~/secrets/cca_ansible_id_rsa'
+cca_ansible_private_key_file: '~/{{ cca_docker_mount_dir | default(null) }}secrets/cca_ansible_id_rsa'
 
 # Specific settings for current cca_for_splunk release.
 cca_for_splunk_repo_url: 'https://github.com/rlinq/oznfdkncqhhn.git'
