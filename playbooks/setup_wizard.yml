@@ -18,9 +18,9 @@
       default_infra_repo_name: 'cca_splunk_infrastructure'
       default_onboarding_repo_name: 'cca_splunk_onboarding'
       default_repo_base_path: "{{ cca_repo_base }}"
-      cca_repo_path: "{{ lookup('ansible.builtin.env', 'CCA_REPO_PATH') | default(cca_repo_base) }}"
-      cca_infra_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_INFRA_REPO_BASE_PATH') | default(cca_repo_base) }}"
-      cca_onboarding_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_ONBOARDING_REPO_BASE_PATH') | default(cca_repo_base) }}"
+      cca_repo_path: "{{ lookup('ansible.builtin.env', 'CCA_REPO_PATH') | default(cca_repo_base, True) }}"
+      cca_infra_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_INFRA_REPO_BASE_PATH') | default(cca_repo_base, True) }}"
+      cca_onboarding_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_ONBOARDING_REPO_BASE_PATH') | default(cca_repo_base, True) }}"
       default_environment_dir: 'cca_lab'
       random_splunk_secret: "{{ lookup('community.general.random_string', base64=True, length=254) }}"
       cca_splunk_secrets:
