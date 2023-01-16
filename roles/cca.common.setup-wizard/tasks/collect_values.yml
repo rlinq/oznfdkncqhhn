@@ -18,11 +18,11 @@
 - name: Prompt for a directory name where to store Splunk CCA Infrastructure config, default {{ cca_environment.default_infra_repo_name }}
   ansible.builtin.pause:
     prompt: "Enter directory name in which to save the infra config ({{ cca_environment.default_infra_repo_name }})"
-  register: wizard_infra_repo_path
+  register: wizard_infra_repo_name
 
 - name: Set infra repo path
   ansible.builtin.set_fact:
-    infra_repo_path: "{{ repo_base_path + '/' + cca_environment.default_infra_repo_name if wizard_infra_repo_path.user_input | length == 0 else repo_base_path + '/' + wizard_infra_repo_path.user_input }}"
+    infra_repo_path: "{{ cca_infra_repo_base_path + '/' + cca_environment.default_infra_repo_name if wizard_infra_repo_name.user_input | length == 0 else cca_infra_repo_base_path + '/' + wizard_infra_repo_name.user_input }}"
 
 - ansible.builtin.set_fact:
     absolute_infra_repo_path: "{{ infra_repo_path }}"
@@ -30,11 +30,11 @@
 - name: Prompt for a directory name where to store Splunk CCA Onboarding config, default {{ cca_environment.default_onboarding_repo_name }}
   ansible.builtin.pause:
     prompt: "Enter directory name in which to save the onboarding config ({{ cca_environment.default_onboarding_repo_name }})"
-  register: wizard_onboarding_repo_path
+  register: wizard_onboarding_repo_name
 
 - name: Set onboarding repo path
   ansible.builtin.set_fact:
-    onboarding_repo_path: "{{ repo_base_path + '/' + cca_environment.default_onboarding_repo_name if wizard_onboarding_repo_path.user_input | length == 0 else repo_base_path + '/' + wizard_onboarding_repo_path.user_input }}"
+    onboarding_repo_path: "{{ cca_onboarding_repo_base_path + '/' + cca_environment.default_onboarding_repo_name if wizard_onboarding_repo_name.user_input | length == 0 else cca_onboarding_repo_base_path + '/' + wizard_onboarding_repo_name.user_input }}"
 
 - name: Check uniqueness of infra and onboarding directory
   ansible.builtin.assert:
@@ -54,12 +54,12 @@
 
 - name: Check if the environments path already exists
   ansible.builtin.stat:
-    path: "../{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"
+    path: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"
   register: stat_cca_splunk_secrets
 
 - name: Get vars from cca_splunk_secrets if it exists
   include_vars:
-    file: "{{ inventory_dir }}/group_vars/all/terraform_environment_specific_tmp"
+    file: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"
   when:
     - stat_cca_splunk_secrets.stat.exists
 

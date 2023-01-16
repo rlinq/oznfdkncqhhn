@@ -8,20 +8,20 @@
 # TODO: Prompt for reusing, recreating or adding a new vault secret.
 
   vars:
-    cca_splunk_var_tmp: "/var/tmp/"
     user_home: "{{ ansible_env.HOME }}"
     script_cwd: "{{ ansible_env.PWD | replace('/playbooks','') }}"
     pwd_array: "{{ script_cwd.split('/') }}"
-    repo_base: "{{ pwd_array[:-1] | join('/') }}"
+    cca_repo_base: "{{ pwd_array[:-1] | join('/') }}"
     splunk_enterprise_version: "8.2.9"
 
     cca_environment:
       default_infra_repo_name: 'cca_splunk_infrastructure'
       default_onboarding_repo_name: 'cca_splunk_onboarding'
-      default_repo_base_path: "{{ repo_base }}"
+      default_repo_base_path: "{{ cca_repo_base }}"
+      cca_repo_path: "{{ lookup('ansible.builtin.env', 'CCA_REPO_PATH') | default(cca_repo_base) }}"
+      cca_infra_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_INFRA_REPO_BASE_PATH') | default(cca_repo_base) }}"
+      cca_onboarding_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_ONBOARDING_REPO_BASE_PATH') | default(cca_repo_base) }}"
       default_environment_dir: 'cca_lab'
-      repo_base_dir: "development/repos"
-      repo_name: "cca_for_splunk"
       random_splunk_secret: "{{ lookup('community.general.random_string', base64=True, length=254) }}"
       cca_splunk_secrets:
         - cca_splunk_server_general: "pass4SymmKey"
