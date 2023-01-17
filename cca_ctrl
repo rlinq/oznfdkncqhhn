@@ -37,7 +37,7 @@ ScriptName=${0##*/}
 
 # CCA for Splunk globals
 CcaScriptName="cca_ctrl"
-CcaRepo=${CCA_REPO_NAME}
+CcaRepo="cca_for_splunk"
 CcaRepoShort="cca"
 ScriptParams=$@
 Setup=false
@@ -72,8 +72,8 @@ fi
 WhiptailHight=30
 BackTitle="   $(hostname -s) - CCA for Splunk $(date +'%Y') v2022.3.2"
 CookieFile="${ScriptPath}/.cookie"
-LicenseFile="${CCA_REPO_PATH}/LICENSE"
-InfoFile="${CCA_REPO_PATH}/RELEASE_NOTES.txt"
+LicenseFile="${ScriptPath}/../${CcaRepo}/LICENSE"
+InfoFile="${ScriptPath}/../${CcaRepo}/RELEASE_NOTES.txt"
 Debug=false
 
 
@@ -690,6 +690,78 @@ function info_dialog() {
 
 
 ###############################################################################
+# Handle display of info dialog
+# Globals:
+#   Playbooks
+# Locals:
+#   PathDepth
+#   TempPathLength
+# Returns:
+#   Highest number of directories in playbook paths
+###############################################################################
+function get_path_depth() {
+
+  local PathDeepth=0
+
+  for Play in $Playbooks ; do
+
+      local TempPathLength=$(echo $Play | awk -F/ '{print NF-1}')
+
+      if [ $TempPathLength -gt $PathDeepth ] ; then
+
+         echo $TempPathLength
+         break
+
+      fi
+
+  done
+
+}
+
+
+###############################################################################
+# Finds greatest common denominator in a set of file paths. Used to shorten path in
+# UI diaglog.
+# Globals:
+#   Playbooks
+# Locals:
+#   PathDepth
+#   CommonPath
+#   TempPath
+# Returns:
+#   The least common den
+###############################################################################
+function greatest_common_path () {
+
+  local PathDepth=$(get_path_depth)
+  local CommonPath=''
+  local TempPath=''
+
+  for Play in $Playbooks ; do
+
+    for ((i=2;i<=$PathDepth;i++)) ; do
+
+    TempPath=$(echo $Play | cut -d"/" -f-${i})
+
+      for Play in $Playbooks ; do
+
+        if [[ ${Play} =~ "${TempPath}".* ]] ; then
+
+            CommonPath=${TempPath}
+
+        else
+
+          echo $CommonPath
+          break 3
+
+        fi
+      done
+    done
+  done
+}
+
+
+###############################################################################
 # Get a list of all playbooks that valid for Splunk CCA
 # Globals:
 #   SelectedPlaybook (Stores the selected playbook)
@@ -703,27 +775,50 @@ function select_playbook() {
   # menu and radio list selections
 
   local PlaybookArray
+  local PlaybookBasePath
 
   cd ${ScriptPath}
-  Playbooks=$(find ../ -maxdepth 3 -type d -name "playbooks"\
+
+  if [[ -z ${CCA_REPO_PATH:-} ]] ; then
+
+    Playbooks=$(find ../ -maxdepth 3 -type d -name "playbooks"\
 	            -o -name "*.yml" ${PlaybookFindOptions}\
                     | grep -e ".*.yml"\
                     | xargs grep "REPO_TYPE=${repo_type}"\
                     | awk -F: '{ print $1 }' | sort -n )
+    PlaybookBasePath="${ScriptPath}/"
+    CommonPath=''
+    ReplacePath='NA'
+
+  else
+
+    Playbooks=$(find ${CCA_REPO_PATH:-}/playbooks\
+              ${CCA_INFRA_REPO_BASE_PATH:-}/${CCA_INFRA_REPO_NAME:-}/playbooks\
+              ${CCA_ONBOARDING_REPO_BASE_PATH:-}/${CCA_ONBOARDING_REPO_NAME:-}/playbooks\
+              -maxdepth 1 -type f -path "*playbooks*"\
+	            -o -name "*.yml" ${PlaybookFindOptions}\
+                    | grep -e ".*.yml"\
+                    | xargs grep "REPO_TYPE=${repo_type}"\
+                    | awk -F: '{ print $1 }' | sort -n )
+    PlaybookBasePath=""
+    CommonPath="$(greatest_common_path)"
+    ReplacePath="$CommonPath/"
+  fi
 
   if [[ $(wc -w <<< ${Playbooks}) -eq 1 ]] ; then RadioListItemStatus="ON" ; else RadioListItemStatus="OFF" ; fi
 
   for Playbook in ${Playbooks} ; do
 
-    local MenuDesc=("$(grep MENU_DESC ${ScriptPath}/${Playbook} | awk -F= '{ print $2 }')")
+    local MenuDesc=("$(grep MENU_DESC ${PlaybookBasePath}${Playbook} | awk -F= '{ print $2 }')")
 
     # Add MenuDesc to Items array
     if [[ a"${MenuDesc}" != a ]] ; then
-
        PlaybookArray+=("$(echo ${Playbook}\
+                      | ${sed_cmd} "s|${ReplacePath}||g"\
                       | ${sed_cmd} "s/${CcaRepo}/${CcaRepoShort}/g"\
                       | ${sed_cmd} "s/${DirName}/${repo_type}/g"\
-                      | ${sed_cmd} "s/playbooks/.../g")")
+                      | ${sed_cmd} "s/playbooks/.../g"\
+                      | ${sed_cmd} "s|//|/|g")")
        PlaybookArray+=("${MenuDesc}")
        PlaybookArray+=("${RadioListItemStatus}")
        MenuDesc=""
@@ -789,6 +884,19 @@ function select_hosts() {
 
   playbook_hosts
 
+  if [[ -z ${CCA_REPO_PATH:-} ]] ; then
+
+    PlaybookBasePath="${ScriptPath}/"
+    CommonPath=''
+    ReplacePath='NA'
+
+  else
+
+    PlaybookBasePath=""
+    ReplacePath="${CommonPath}/"
+
+  fi
+
   for Host in ${PlaybookHosts[@]} ; do
 
     HostArray+=("${Host}")
@@ -797,7 +905,13 @@ function select_hosts() {
 
   done
 
-  SelectedHosts=$(whiptail_checklist "Host Selection for ${SelectedPlaybook}"\
+  WindowTextSelectedPlaybook=$(echo ${SelectedPlaybook}\
+                      | ${sed_cmd} "s|${ReplacePath}||g"\
+                      | ${sed_cmd} "s/${CcaRepo}/${CcaRepoShort}/g"\
+                      | ${sed_cmd} "s/${DirName}/${repo_type}/g"\
+                      | ${sed_cmd} "s/playbooks/.../g")
+
+  SelectedHosts=$(whiptail_checklist "Host Selection for ${WindowTextSelectedPlaybook}"\
      "Hosts that will be part of playbook execution " "${HostArray[@]}")
   ${Debug} && echo "Playbook --limits are:" ${SelectedHosts}
 
@@ -816,14 +930,34 @@ function playbook_hosts() {
   local InSection=false
   local Host
   local HostArray
+
+  if [[ -z ${CCA_REPO_PATH:-} ]] ; then
+
+    PlaybookBasePath="${ScriptPath}/"
+
+    SelectedPlaybook=$(echo ${SelectedPlaybook}\
+                      | ${sed_cmd} "s|/${CcaRepoShort}/|/${CcaRepo}/|g"\
+                      | ${sed_cmd} "s|/${repo_type}/|/${DirName}/|g"\
+                      | ${sed_cmd} "s:/\.\.\./:/playbooks/:g")
+
+  else
+
+    PlaybookBasePath=""
+
+    SelectedPlaybook=$(echo ${SelectedPlaybook}\
+                      | ${sed_cmd} "s|^|${CommonPath}/|g"\
+                      | ${sed_cmd} "s|/${CcaRepoShort}/|/${CcaRepo}/|g"\
+                      | ${sed_cmd} "s|/${repo_type}/|/${DirName}/|g"\
+                      | ${sed_cmd} "s:/\.\.\./:/playbooks/:g")
+
+  fi
+
   # Assign the HostArray, restrictive set -u needs it to be defined
   HostArray=${HostArray[@]+"${HostArray[@]}"}
-  SelectedPlaybook=$(echo ${SelectedPlaybook} | ${sed_cmd} "s:/${repo_type}/:/${DirName}/:g"\
-                    | ${sed_cmd} "s:/${CcaRepoShort}/:/${CcaRepo}/:g"\
-                    | ${sed_cmd} "s:/\.\.\./:/playbooks/:g")
+
   IFS=$'\n'
   for Line in $(ansible-playbook --check -i ${ScriptPath}/${SelectedEnvironment}\
-                  --list-hosts ${ScriptPath}/${SelectedPlaybook}) ; do
+                  --list-hosts ${PlaybookBasePath}${SelectedPlaybook}) ; do
 
     if [[ "${Line}" =~ hosts.\( ]] ; then
 
@@ -868,8 +1002,25 @@ function playbook_hosts() {
 function get_extra_vars() {
 
 # Get extra vars options from playbook
-local PlaybookVars=$(grep EXTRA_VARS ${ScriptPath}/${SelectedPlaybook} | cut -d"=" -f2)
-local Title="Extra vars for ${SelectedPlaybook}"
+if [[ -z ${CCA_REPO_PATH:-} ]] ; then
+
+  PlaybookBasePath="${ScriptPath}/"
+  ReplacePath='NA'
+
+else
+
+  PlaybookBasePath=""
+  ReplacePath="${CommonPath}/"
+
+fi
+
+local PlaybookVars=$(grep EXTRA_VARS ${PlaybookBasePath}${SelectedPlaybook} | cut -d"=" -f2)
+local WindowTextSelectedPlaybook=$(echo ${SelectedPlaybook}\
+                      | ${sed_cmd} "s|${ReplacePath}||g"\
+                      | ${sed_cmd} "s/${CcaRepo}/${CcaRepoShort}/g"\
+                      | ${sed_cmd} "s/${DirName}/${repo_type}/g"\
+                      | ${sed_cmd} "s/playbooks/.../g")
+local Title="Extra vars for ${WindowTextSelectedPlaybook}"
 local Description="  Here you can add extra variables for the playbook\n\n\
   The supported extra-vars are read from the playbook as #EXTRA_VARS=\n\n\
   Available default variables in this playbook are:\n\
@@ -917,7 +1068,17 @@ function run_playbook () {
   local CheckMode=""
   local AnsiblePlaybookArray
 
-  AnsiblePlaybookArray+=("${ScriptPath}/${SelectedPlaybook}")
+  if [[ -z ${CCA_REPO_PATH:-} ]] ; then
+
+    PlaybookBasePath="${ScriptPath}/"
+
+  else
+
+    PlaybookBasePath=""
+
+  fi
+
+  AnsiblePlaybookArray+=("${PlaybookBasePath}${SelectedPlaybook}")
   if [[ "${repo_type}" != "main" ]] ; then
       AnsiblePlaybookArray+=("-i ${ScriptPath}/${SelectedEnvironment}")
   fi
@@ -989,14 +1150,14 @@ set +e
  test -f .storage/settings && source <(grep = .storage/settings)
 
  if [[ $(file_md5 "${ScriptPath}/${ScriptName}") == \
-       $(file_md5 "${CCA_REPO_PATH}/${CcaScriptName}") ]] ;\
+       $(file_md5 "${ScriptPath}/../${CcaRepo}/${CcaScriptName}") ]] ;\
  then
 
   ${Debug} &&  echo "Version OK"
 
  else
 
-   if [[ ! -f "${CCA_REPO_PATH}/${CcaScriptName}" ]] ; then
+   if [[ ! -f "${ScriptPath}/../${CcaRepo}/${CcaScriptName}" ]] ; then
 
      echo
      echo "The main CCA repository or cca_ctlr file couldn't be found."
@@ -1013,7 +1174,7 @@ set +e
    echo "Do you want to update it?"
    if $(confirmation_dialog) ; then
 
-     cp "${CCA_REPO_PATH}/${ScriptName}" "${ScriptPath}/"
+     cp "${ScriptPath}/../${CcaRepo}/${ScriptName}" "${ScriptPath}/"
      eval "bash ${ScriptPath}/${ScriptName} ${ScriptParams}"
      exit 0
 
