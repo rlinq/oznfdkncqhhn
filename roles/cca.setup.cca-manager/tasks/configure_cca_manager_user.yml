@@ -115,6 +115,7 @@
       ###############################
 
       # settings for history:
+      alias logname='whoami'
       export PROMPT_COMMAND='echo "$(date "+%Y-%m-%d %H:%M:%S") $(logname):${PWD} $(history 1)" >> ~/.bash-history-$(date "+%Y-%m-%d").log'
       export HISTCONTROL="ignoreboth"
 
@@ -128,7 +129,6 @@
       alias ...='cd ../../'                   # Go back 2 directory levels
       alias path='echo -e ${PATH//:/\\n}'
       alias grep='grep --color=auto'
-      alias logname=whoami
 
       # If a user has a .profile_local source it
       if [[ -f ~/.profile_local ]]; then
@@ -144,7 +144,7 @@
       fi
     mode: 400
   when:
-    - not docker_build | default(false)
+    - docker_build | default(false)
 
 - name: Get python path
   ansible.builtin.command:
