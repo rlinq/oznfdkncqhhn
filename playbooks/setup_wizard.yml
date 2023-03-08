@@ -12,7 +12,7 @@
     script_cwd: "{{ ansible_env.PWD | replace('/playbooks','') }}"
     pwd_array: "{{ script_cwd.split('/') }}"
     cca_repo_base: "{{ pwd_array[:-1] | join('/') }}"
-    splunk_enterprise_version: "8.2.9"
+    splunk_enterprise_version: "9.0.4"
 
     cca_environment:
       default_infra_repo_name: 'cca_splunk_infrastructure'
@@ -65,23 +65,35 @@
         tasks_from:
           collect_values.yml
 
-    - name: Prompt for initial names
+    - name: Prompt for overwriting directories if they exists
+      ansible.builtin.pause:
+        prompt: >-
+         IMPORTANT. The selected directories already exists, if you select yes all files will be
+         replaced with CCA template files.
+         After the file copy you will be prompted to update stored secrets.
+         If you select no, only prompted updates of stored secret updates will be processed.
+         Would you like to replace your files with template versions (yes/no)?"
+      register: copy_cca_template_files
+      when:
+        - stat_cca_splunk_secrets.stat.exists
+
+    - name: Setup directories and copy template files
       ansible.builtin.include_role:
         name: cca.common.setup-wizard
         tasks_from:
           setup_directories.yml
+      when:
+        - copy_cca_template_files.user_input | default('yes') == 'yes'
 
   tasks:
-
-    # return stat_wizard_vault_secret, vars_current_wizard
-    - name: Wizard status
+    - name: Wizard init
       ansible.builtin.include_role:
         name: cca.common.setup-wizard
-        tasks_from: wizard_status.yml
+        tasks_from: wizard_init.yml
 
     - name: Set fact that the current splunk secret is the secret found in cca_splunk_secret_file
       ansible.builtin.set_fact:
-        cca_identical: "{{ true if splunk_secret == cca_splunk_secret | default('') }}"
+        cca_identical: "{{ true if splunk_secret == vars_current_wizard.cca_splunk_secret | default('') }}"
 
     - name: Instantiate cli user, password and password hash
       ansible.builtin.include_role:
@@ -105,24 +117,3 @@
         loop_var: secret_type
       with_items:
         - "{{ cca_environment.cca_splunk_secrets_no_prompt }}"
-
-    - name: Vault the splunk secret
-      ansible.builtin.set_fact:
-        vault_secret: "{{ splunk_secret | vault(lookup('ansible.builtin.file', ansible_env.ANSIBLE_VAULT_PASSWORD_FILE)) | split() | join('\\r\\n') | regex_replace('1.2;AES256;filter_default', '1.1;AES256') }}"
-
-    - name: Save the clear text secret as an ansible vault in infra repo
-      ansible.builtin.lineinfile:
-        path: "{{ vars.cca_splunk_secret_file }}"
-        line: 'cca_splunk_secret: !vault "{{ vault_secret }}"'
-        regex: '^cca_splunk_secret:'
-
-    - name: Get checksum of splunk secret
-      ansible.builtin.shell:
-        cmd: "echo -n {{ splunk_secret }} | sha256sum | awk '{ print $1 }'"
-      register: splunk_secret_checksum
-
-    - name: Store checksum of the splunk.secret file
-      ansible.builtin.lineinfile:
-        path: "{{ vars.cca_splunk_secret_file }}"
-        line: "cca_splunk_secret_sha256: '{{ splunk_secret_checksum.stdout }}'"
-        regex: '^cca_splunk_secret_sha256:'

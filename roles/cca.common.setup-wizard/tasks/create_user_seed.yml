@@ -8,7 +8,7 @@
 # Author: André Enemark
 #         Roger Lindquist
 #
-# Release: v2022.3.2
+# Release: 2023.1.1
 
 
 - ansible.builtin.set_fact:
@@ -28,30 +28,33 @@
 
 - name: Password for admin user
   ansible.builtin.pause:
-    prompt: "Press enter for a random password or enter a 8 character minimum password ({{ tmp_password }})"
+    prompt: "Press enter for {{ password_type }} password or enter a 8 character minimum password ({{ tmp_password }})"
   register: master
 
-- name: Get the admin password to hash
+- name: Store admin password
   ansible.builtin.set_fact:
-    password_to_hash: '{{ tmp_password if master.user_input | length == 0 else master.user_input }}'
+    user_password: '{{ tmp_password if master.user_input | length == 0 else master.user_input }}'
   no_log: True
 
 - name: Hash the admin password
   ansible.builtin.shell:
-    cmd: "echo '{{ password_to_hash }}' | pcrypt -r 700000"
+    cmd: "echo '{{ user_password }}' | pcrypt -r 700000"
   register: tmp_password_hash
   no_log: True
 
 - ansible.builtin.set_fact:
     user_info:
         username: "{{ tmp_admin if splunk_admin_username.user_input | length == 0 else splunk_admin_username.user_input }}"
-        password: "{{ tmp_password if splunk_admin_username.user_input | length == 0 else master.user_input }}"
+        password: "{{ user_password }}"
         password_hash: "{{ tmp_password_hash.stdout }}"
   no_log: True
 
 - name: Vault the admin password
   ansible.builtin.set_fact:
-    vault_secret: "{{ user_info.password | vault(lookup('ansible.builtin.file', ansible_env.ANSIBLE_VAULT_PASSWORD_FILE)) | split() | join('\\r\\n') | regex_replace('1.2;AES256;filter_default', '1.1;AES256') }}"
+    vaulted_secret_value: >-
+      {{ user_info.password | vault(lookup('ansible.builtin.file', ansible_env.ANSIBLE_VAULT_PASSWORD_FILE))
+      | split() | join('\r\n')
+      | regex_replace('1.2;AES256;filter_default', '1.1;AES256') }}
 
 - name: Save cli username to vars file in infra and onboarding repo
   ansible.builtin.lineinfile:
@@ -65,7 +68,7 @@
 - name: Save the clear text secret as an ansible vault in infra and onboarding repo
   ansible.builtin.lineinfile:
     path: "{{ item }}"
-    line: 'cca_splunk_admin_password: !vault "{{ vault_secret }}"'
+    line: 'cca_splunk_admin_password: !vault "{{ vaulted_secret_value }}"'
     regex: '^cca_splunk_admin_password:'
   loop:
     - "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"

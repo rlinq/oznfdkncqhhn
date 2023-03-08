@@ -37,6 +37,9 @@
       find_splunk_tgz.files | length == 1
     fail_msg: >-
       Could not find exactly one Splunk tar file on the host
+      that matches splunk-{{ splunk_enterprise_version }}-*64.tg
+  when:
+    - enterprise_upgrade | default(false)
 
 - name: Untar Splunk package
   ansible.builtin.unarchive:
@@ -63,6 +66,12 @@
     mode: '775'
   when:
     - not stat_splunk_enterprise_bin.stat.exists
+
+- name: Create directory used by cca to store state files
+  ansible.builtin.file:
+    path: "{{ splunk_path }}/.cca"
+    state: directory
+    mode: '775'
 
 - name: If an Splunk upgrade is performed, cleanup files from older versions
   ansible.builtin.command:

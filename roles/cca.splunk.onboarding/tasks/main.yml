@@ -22,12 +22,12 @@
     - shcluster is defined
 
 - name: Include task for master apps staging
-  ansible.builtin.include_tasks: stage_master_apps.yml
+  ansible.builtin.include_tasks: stage_manager_apps.yml
   when:
     - cluster is defined
 
 - name: Include task for master apps deployment
-  ansible.builtin.include_tasks: deploy_master_apps.yml
+  ansible.builtin.include_tasks: deploy_manager_apps.yml
   when:
     - cluster is defined
 

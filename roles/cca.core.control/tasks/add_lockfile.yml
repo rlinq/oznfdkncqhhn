@@ -48,7 +48,7 @@
     - target is defined
     - target == "deploy_apps" or
       target == "deploy_deployment-apps" or
-      target == "deploy_master-apps" or
+      target == "deploy_manager-apps" or
       target == "deploy_shcluster_apps"
 
 - name: Create lock file to manage multi user execution
@@ -63,7 +63,7 @@
     - target is defined
     - target == "deploy_apps" or
       target == "deploy_deployment-apps" or
-      target == "deploy_master-apps" or
+      target == "deploy_manager-apps" or
       target == "deploy_shcluster_apps"
 
 - name: Wait for data infrastructure lock file to be deleted by other process. If unexpected then delete /tmp/.cca_infra_lock-ENV_NAME

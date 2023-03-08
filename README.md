@@ -23,7 +23,7 @@ Besides adding your servers to the ansible inventory file, there is less than 25
 
 The templates that we provide for configuring Splunk roles are used in our own Multisite Cluster implementations. After you have configured your project, the control is in your hands when it comes to deciding your settings. Adding or modifying parameters has no impact on the framework and are localized under your control.
 
-Playbooks are DRY (Don't Repeat Yourself), with almost no tasks - instead they are using common code in roles. So an update of a task has just to be done in one place, keeping code updates much cleaner and easily overviewed.
+Playbooks are DRY (Don't Repeat Yourself), with almost no tasks - instead they are using common code in roles. So an update of a task has just to be done in one place, keeping code updates much cleaner and easier to overview.
 
 # Technically what is CCA for Splunk ?
 
@@ -41,7 +41,7 @@ Our design principles behind the project are:
 * Make data valuable
 * Sharing is caring
 
-We base our configuration and naming standard on [Splunk Validated Architecture](https://www.splunk.com/pdfs/technical-briefs/splunk-validated-architectures.pdf) description. See [Ansible Inventory File](/environments/infra_template/hosts) for naming convention and Ansible groups layout.
+We base our configuration and naming standard on [Splunk Validated Architecture](https://www.splunk.com/pdfs/technical-briefs/splunk-validated-architectures.pdf) description. See [Ansible Inventory File](/templates/infrastructure_template/environments/ENVIRONMENT_NAME/hosts) for naming convention and Ansible groups layout.
 
 # Architecture
 ## Prerequisites
@@ -77,7 +77,7 @@ The repository that holds all infrastructure configurations and the ansible host
 
 **Onboarding Repo**
 
-The repository holds all data onboarding related configuration and aps. This repo has user specific configurations and apps and should be connected to a central remote repository. Secrets are stored in ansible vaults and can thus be safely store in the repo.
+The repository holds all data onboarding related configuration and apps. This repo has user specific configurations and apps and should be connected to a central remote repository. Secrets are stored in ansible vaults and can thus be safely store in the repo.
 
 
 ### Repository overview
@@ -100,7 +100,7 @@ The repository holds all data onboarding related configuration and aps. This rep
 
 **Step 1: Plan your architecture**
  CCA for Splunk can deploy anything from standalone servers to multisite clusters, and up to 9 clusters in each environment, controlled by the same automation framework.
- A proper planning is key to define the type of architure(s) that will be created, their environment, individual specifications and requirements.
+ A proper planning is key to define the type of architecture(s) that will be created, their environment, individual specifications and requirements.
 
 **Step 2: Install the Manager and pull CCA for Splunk**
 Machine minimum requirements:
@@ -115,14 +115,15 @@ Read up on our [Automation Readiness](/automation_readiness.md) page.
 
 These playbooks will check your automation readiness of both the Manager server, and your Splunk infrastructure in simple assert tasks. When you have passed all assert checks, your environment is ready for the automation journey to start.
 
-**b**) run `./cca_crtl --setup` from the **cca_for_splunk** repo. The wizard will ask you to provide the following information:
+**b**) run `./cca_ctrl --setup` from the **cca_for_splunk** repo. The wizard will ask you to provide the following information:
 
 * Name of your repo to store Splunk Infrastructure configuration (cca_splunk_infrastructure)
 * Name of your repo to store Splunk Onboarding configuration (cca_splunk_onboarding)
 * Name of your environment (cca_lab)
 
-When this information is collected a temporary splunk installation will be performed and used to generate a splunk.secret file, hash passwords and pass4SymmKeys. After the installation is completed you will be asked to provide the following information:
+When this information is collected, template files will be copied from the **cca_for_splunk/templates** directory to build the base for the two required repositories, when this is completed you will be asked to provide the following information:
 
+* Splunk Secret, this is the key used to encrypt and decrypt Splunk Passwords and secrets. Accept the generated key or provide your own.
 * The name of the admin user (admin)
 * The password for the admin user, a random password is generated. Store it if you choose to use it.
 * The general pass4SymmKey that is used by Splunk for S2S communication, like communication to license managers. If you have an existing infrastructure, use that pass4SymmKey. If not keep the random key.
@@ -146,14 +147,13 @@ To access the cleartext value of one of the ansible secrets, run the following c
 ansible -i environments/cca_lab -m debug -a "var=cca_splunk_certs_server_default_sslpassword" localhost
 ```
 
-**c**) Verification
-verify that two companion repos has been created and staged with the correct information.
+**c**) Verification: Verify that two companion repos has been created and staged with the correct information.
 
 **Step 3:**  Update ansible inventory files and variable values in the following files in your environment directory.
 
 * group_vars/all/env_specific
-  * cca_splunk_license_manager_uri: 'https://UPDATE_LICENSE_MANGER_FQDN:8089'
-  * UPDATE the clustering manager uris if needed.
+  * cca_splunk_license_manager_uri: 'https://UPDATE_LICENSE_MANAGER_FQDN:8089'
+  * domain_name: 'UPDATE_DOMAIN.NAME'
   * cca_splunk_alert_action_smtp: 'UPDATE_SMTP_SERVER_FQDN'
   * cca_splunk_health_alert_action_email_to: 'UPDATE_ALERT_EMAIL_ADDRESS'
   * cca_splunk_extension_cert_rootca: 'UPDATE_ROOT_CA_EXPIRE_DATE_Issuing_CA_EXPIRE_DATE.pem'
@@ -169,6 +169,8 @@ verify that two companion repos has been created and staged with the correct inf
 * group_vars/all/linux
   * splunk_user_uid: 'UPDATE_SPLUNK_UID'
   * splunk_user_gid: 'UPDATE_SPLUNK_GID'
+  * firewall_zone_name: 'UPDATE_ZONE_NAME'
+  * firewall_zone_description: 'UPDATE_ZONE_DESCRIPTION'
 * hosts
   * UPDATE Splunk S2S ports if the default don't match your environment.
   * UPDATE Splunk enterprise version to your desired version.
@@ -203,5 +205,5 @@ Now when your Splunk infrastructure is running smooth, it's time to onboard data
 * [cca.core.linux](/roles/cca.core.linux/README.md)
 * [cca.common.setup-wizard](/roles/cca.common.setup-wizard/README.md)
 * [cca.splunk.onboarding](/roles/cca.splunk.onboarding/README.md)
-* [cca.splunk.user-profiles](/roles/cca.splunk.user-profiles/README.md)
+* [cca.splunk.user-profile](/roles/cca.splunk.user-profile/README.md)
 * [cca.setup.cca-manager](/roles/cca.setup.cca-manager/README.md)

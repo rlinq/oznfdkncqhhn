@@ -70,7 +70,7 @@ else
 fi
 
 WhiptailHight=30
-BackTitle="   $(hostname -s) - CCA for Splunk $(date +'%Y') v2022.3.2"
+BackTitle="   $(hostname -s) - CCA for Splunk $(date +'%Y') 2023.1.1"
 CookieFile="${ScriptPath}/.cookie"
 LicenseFile="${ScriptPath}/../${CcaRepo}/LICENSE"
 InfoFile="${ScriptPath}/../${CcaRepo}/RELEASE_NOTES.txt"
@@ -1280,6 +1280,34 @@ function multiplexer_control () {
 }
 
 ###############################################################################
+# Validate and check log options from .storage/settings. If settings are not
+# found don't enable logging.
+# Supports logging to a user home path or OS path
+# Returns:
+#   0 If validation is ok
+#   13 if validation check is not ok
+###############################################################################
+function cca_log_configuration () {
+
+  test -f .storage/settings && source <(grep = .storage/settings)
+    if ! ${EnforceMultiplexer}  ; then
+
+      :
+
+    else
+
+      echo
+      echo "Run cca_control in a screen or tmux session"
+      echo "If you would like to supress this message and run without using"
+      echo "terminal Multiplexer, set EnforceMultiplexer to False in .storage/settings"
+      exit 13
+
+    fi
+
+}
+
+
+###############################################################################
 # Main part of script
 
 # Check that the lastest version of the script is used if executed outside the repo
@@ -1294,6 +1322,9 @@ validate_os
 # Check option if we should enforce tmux or screen sessions
 test -f .storage/settings && source <(grep = .storage/settings)
 multiplexer_control
+
+# Use .storage/settings to control log settings
+cca_log_configuration
 
 # Dialog to show the release notes and info text
 info_dialog

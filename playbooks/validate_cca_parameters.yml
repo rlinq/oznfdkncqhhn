@@ -1,0 +1,21 @@
+# Playbook to handle validation
+#
+# REPO_TYPE=infra
+# MENU_DESC=Validate CCA Parameters and files
+# EXTRA_VARS=validate_cca_infrastructure_files(false)
+
+- name: Initialize playbook run on manager server - Monitoring Consoles
+  hosts: manager
+  connection: local
+  strategy: linear
+  any_errors_fatal: true
+  vars:
+    validate_cca_infrastructure_files: true
+  pre_tasks:
+    - name: Include initialize task
+      ansible.builtin.include_role:
+        name: cca.core.control
+        tasks_from:
+          initialize.yml
+      vars:
+        target: "monitoring_consoles"

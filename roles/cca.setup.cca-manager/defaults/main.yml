@@ -3,17 +3,17 @@
 
 # Unique SSH key file that must match and work against the Splunk infrastructure
 # servers. Update the name if needed.
-cca_ansible_private_key_file: '~/{{ cca_docker_mount_dir | default(null) }}secrets/cca_ansible_id_rsa'
+cca_ansible_private_key_file: '~/{{ cca_docker_mount_dir | default(none) }}secrets/cca_ansible_id_rsa'
 
 # Specific settings for current cca_for_splunk release.
-cca_for_splunk_repo_url: 'https://github.com/rlinq/oznfdkncqhhn.git'
+cca_for_splunk_repo_url: 'https://github.com/innovationfleet/cca_for_splunk'
 cca_for_splunk_directory: 'cca_for_splunk'
-cca_manager_cca_for_splunk_path: '{{ cca_manager_user_dir }}/master/{{ cca_for_splunk_directory }}'
+cca_manager_cca_for_splunk_path: '{{ cca_manager_user_dir }}/main/{{ cca_for_splunk_directory }}'
 cca_python_minor_version: '3.9'
 cca_python_release: '3.9.10'
 cca_ansible_minor_version: '2.12'
 cca_ansible_release: '2.12.5'
-cca_manager_user_dir: "{{ ansible_facts.user_dir + '/' + cca_docker_mount_dir | default(null)
+cca_manager_user_dir: "{{ ansible_facts.user_dir + '/' + cca_docker_mount_dir | default(none)
                        if
                          post_docker_setup is defined
                        else
@@ -25,14 +25,14 @@ cca_manager_tools_directories:
 
 cca_manager_directories:
   - "{{ cca_manager_user_dir }}secrets"
-  - "{{ cca_manager_user_dir }}master"
+  - "{{ cca_manager_user_dir }}main"
 
-cca_manager_ansible_vault_secret_path: '~/{{ cca_docker_mount_dir | default(null) }}secrets/cca_ansible_vault_secret'
+cca_manager_ansible_vault_secret_path: '~/{{ cca_docker_mount_dir | default(none) }}secrets/cca_ansible_vault_secret'
 cca_ansible_roles_path: "{{ './roles:~/clones/cca_for_splunk/roles'
                          if
                             post_docker_setup is defined
                         else
-                            './roles:~/master/cca_for_splunk/roles'
+                            './roles:~/main/cca_for_splunk/roles'
                         }}"
 
 # CCA for Splunk is a strong supporter of the Mitogen framework as it speeds up

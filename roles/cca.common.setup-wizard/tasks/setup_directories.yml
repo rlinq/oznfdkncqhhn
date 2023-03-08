@@ -50,6 +50,7 @@
      - "splunk/etc/deployment-apps"
      - "splunk/etc/shcluster"
      - "splunk/etc/master-apps"
+     - "splunk/etc/manager-apps"
 
  - name: Cleanup unused ENVIRONMENT_NAME directory for onboarding
    ansible.builtin.file:
@@ -60,6 +61,7 @@
      - "splunk/etc/deployment-apps"
      - "splunk/etc/shcluster"
      - "splunk/etc/master-apps"
+     - "splunk/etc/manager-apps"
 
  - name: Set execute bit on cca_ctrl file
    ansible.builtin.file:

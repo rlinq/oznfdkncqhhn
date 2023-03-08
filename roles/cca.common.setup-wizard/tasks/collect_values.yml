@@ -9,7 +9,7 @@
 # Author: André Enemark
 #         Roger Lindquist
 #
-# Release: v2022.3.2
+# Release: 2023.1.1
 
 - name: Set base path for repo
   ansible.builtin.set_fact:
@@ -60,12 +60,28 @@
 - name: Get vars from cca_splunk_secrets if it exists
   include_vars:
     file: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"
+    name: vars_current_wizard
   when:
     - stat_cca_splunk_secrets.stat.exists
 
+- ansible.builtin.set_fact:
+   cca_splunk_secret_path: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all"
+
+- ansible.builtin.set_fact:
+   cca_splunk_secret_file: "{{ cca_splunk_secret_path }}/cca_splunk_secrets"
+
+- name: Set fact if depending on existence of current cca_splunk_secrets
+  ansible.builtin.set_fact:
+    password_type: "{% if stat_cca_splunk_secrets.stat.exists %}the current{% else %}a random{% endif %}"
+    creation_type: "{% if stat_cca_splunk_secrets.stat.exists %}new{% else %}existing{% endif %}"
+
+- name: Set splunk secret to an existing one or new
+  ansible.builtin.set_fact:
+    tmp_splunk_secret: "{% if stat_cca_splunk_secrets.stat.exists %}{{ vars_current_wizard.cca_splunk_secret }}{% else %}{{ cca_environment.random_splunk_secret }}{% endif %}"
+
 - name: Accept random splunk secret or provide your own
   ansible.builtin.pause:
-    prompt: "Press enter for a random secret or enter an existing one that is exactly 254 character, ({{ cca_environment.random_splunk_secret }})"
+    prompt: "Press enter for {{ password_type }} secret or enter an {{ creation_type }} one that is exactly 254 character, ({{ tmp_splunk_secret }})"
   register: wizard_splunk_secret
 
 - name: Assert length of Splunk secret
@@ -77,4 +93,48 @@
     - wizard_splunk_secret.user_input != ''
 
 - ansible.builtin.set_fact:
-    splunk_secret: "{{ cca_environment.random_splunk_secret if wizard_splunk_secret.user_input | length == 0 else wizard_splunk_secret.user_input }}"
+    splunk_secret: "{{ tmp_splunk_secret if wizard_splunk_secret.user_input | length == 0 else wizard_splunk_secret.user_input }}"
+
+- name: Vault the splunk secret
+  ansible.builtin.set_fact:
+    vaulted_secret_value: >-
+      {{ splunk_secret | vault(lookup('ansible.builtin.file', ansible_env.ANSIBLE_VAULT_PASSWORD_FILE))
+      | split() | join('\r\n')
+      | regex_replace('1.2;AES256;filter_default', '1.1;AES256') }}
+
+- name: Create necessary directory if they are missing
+  ansible.builtin.file:
+    path: '{{ item.path }}'
+    state: '{{ item.type }}'
+    mode: '0755'
+  loop:
+    - { type: 'directory', path: '{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all' }
+    - { type: 'touch', path: '{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets' }
+    - { type: 'directory', path: '{{ onboarding_repo_path }}/environments/{{ environment_dir }}/group_vars/all' }
+
+- name: Save the clear text secret as an ansible vault in infra repo
+  ansible.builtin.lineinfile:
+    path: "{{ vars.cca_splunk_secret_file }}"
+    line: 'cca_splunk_secret: !vault "{{ vaulted_secret_value }}"'
+    regex: '^cca_splunk_secret:'
+
+- name: Get checksum of splunk secret
+  ansible.builtin.shell:
+    cmd: "echo -n {{ splunk_secret }} | sha256sum | awk '{ print $1 }'"
+  register: splunk_secret_checksum
+
+- name: Store checksum of the splunk.secret file
+  ansible.builtin.lineinfile:
+    path: "{{ vars.cca_splunk_secret_file }}"
+    line: "cca_splunk_secret_sha256: '{{ splunk_secret_checksum.stdout }}'"
+    regex: '^cca_splunk_secret_sha256:'
+
+- name: Get number of index clusters to collect secrets for
+  ansible.builtin.pause:
+    prompt: "Enter a number between 0 to 9 to provide random_pass4SymmKey for the index cluster setup"
+  register: index_clusters_input
+
+- name: Get number of search head clusters to collect secrets for
+  ansible.builtin.pause:
+    prompt: "Enter a number between 0 to 9 to provide random_pass4SymmKey for the search head cluster setup"
+  register: searchhead_clusters_input
