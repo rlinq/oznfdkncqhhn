@@ -45,6 +45,7 @@
       ###############################
 
       # settings for history:
+      alias logname=whoami
       export PROMPT_COMMAND='echo "$(date "+%Y-%m-%d %H:%M:%S") $(logname):${PWD} $(history 1)" >> ~/.bash-history-$(date "+%Y-%m-%d").log'
       export HISTCONTROL="ignoreboth"
 
