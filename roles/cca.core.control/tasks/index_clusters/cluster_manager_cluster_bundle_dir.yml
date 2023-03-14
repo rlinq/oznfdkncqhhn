@@ -26,7 +26,7 @@
     paths: "{{ splunk_path }}/etc/master-apps"
     patterns: ".*"
     hidden: true
-    recurse: yes
+    recurse: true
     file_type: any
   register: master_apps_files
   when:
@@ -44,7 +44,7 @@
     - item.path != "/opt/splunk/etc/master-apps/_cluster/default/indexes.conf"
     - item.path != "/opt/splunk/etc/master-apps/_cluster/local/README"
   register: user_content_master_apps
-  no_log: "{{ hide_password }}"
+  no_log: "{{ hide_password }}"
 
 - name: Set fact when master-apps are untouched
   become: true
@@ -66,7 +66,7 @@
     - not master_apps_untouched | default(false)
     - not migrate_master_apps | default(false)
 
-- name: Validate answer and inform user if other than a yes answer is recieved
+- name: Validate answer and inform user if other than a yes answer is received
   ansible.builtin.pause:
     prompt: "Received answer: ({{ prompt_answer.user_input }}), expected a yes, playbook will exit"
     minutes: 1
@@ -91,7 +91,7 @@
   become_method: sudo
   ansible.builtin.find:
     paths: "{{ splunk_path }}/etc/master-apps"
-    recurse: yes
+    recurse: true
     file_type: directory
   register: master_apps_directories
   when:
@@ -102,10 +102,10 @@
   become_user: "{{ splunk_user }}"
   become_method: sudo
   ansible.builtin.file:
-    path: "{{ item.path | replace('master-apps','manager-apps') }}"
+    path: "{{ item.path | replace('master-apps', 'manager-apps') }}"
     state: directory
   with_items:
-     "{{ master_apps_directories.files }}"
+    "{{ master_apps_directories.files }}"
   when:
     - not master_apps_untouched | default(false)
     - not master_apps_migration_state | default(false)
@@ -116,10 +116,10 @@
   become_method: sudo
   ansible.builtin.copy:
     src: "{{ item.path }}"
-    dest: "{{ item.path | replace('master-apps','manager-apps') }}"
-    remote_src: yes
+    dest: "{{ item.path | replace('master-apps', 'manager-apps') }}"
+    remote_src: true
   with_items:
-     "{{ master_apps_files.files }}"
+    "{{ master_apps_files.files }}"
   when:
     - not master_apps_untouched | default(false)
     - not master_apps_migration_state | default(false)
@@ -132,7 +132,7 @@
     path: "{{ item.path }}"
     state: absent
   with_items:
-     "{{ master_apps_files.files }}"
+    "{{ master_apps_files.files }}"
   when:
     - item.path != "{{ splunk_path }}/etc/master-apps/_cluster/default/indexes.conf"
     - item.path != "{{ splunk_path }}/etc/master-apps/_cluster/local/README"
@@ -146,7 +146,7 @@
     path: "{{ item.path }}"
     state: absent
   with_items:
-     "{{ master_apps_directories.files }}"
+    "{{ master_apps_directories.files }}"
   when:
     - master_apps_directories.matched | default(0) > 0
     - 'item.path not in "{{ splunk_path }}/etc/master-apps/_cluster/default"'
@@ -161,8 +161,8 @@
     path: "{{ item }}"
     state: absent
   with_items:
-     - "{{ splunk_path }}/etc/master-apps/.git"
-     - "{{ splunk_path }}/etc/master-apps/.gitignore"
+    - "{{ splunk_path }}/etc/master-apps/.git"
+    - "{{ splunk_path }}/etc/master-apps/.gitignore"
   when:
     - not master_apps_untouched | default(false)
 
@@ -182,3 +182,4 @@
   ansible.builtin.file:
     path: "{{ splunk_path }}/.cca/master-apps_config_bundle_dir_migrated"
     state: touch
+    mode: '600'

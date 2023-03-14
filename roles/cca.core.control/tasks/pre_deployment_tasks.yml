@@ -24,8 +24,8 @@
       Please run the CCA playbook manage_index_clusters.yml from the infrastructure
       repo. When completed, return here and deploy manager-apps again.
   when:
-      - inventory_hostname in groups.cluster_managers
-      - current_splunk_enterprise_version | default(splunk_enterprise_version) is version('9.0.0', '>=')
+    - inventory_hostname in groups.cluster_managers
+    - current_splunk_enterprise_version | default(splunk_enterprise_version) is version('9.0.0', '>=')
 
 - name: Include licensed CCA pre deployment tasks
   ansible.builtin.include_role:

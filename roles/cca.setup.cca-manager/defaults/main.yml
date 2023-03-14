@@ -8,7 +8,7 @@ cca_ansible_private_key_file: '~/{{ cca_docker_mount_dir | default(none) }}secre
 # Specific settings for current cca_for_splunk release.
 cca_for_splunk_repo_url: 'https://github.com/innovationfleet/cca_for_splunk'
 cca_for_splunk_directory: 'cca_for_splunk'
-cca_manager_cca_for_splunk_path: '{{ cca_manager_user_dir }}/main/{{ cca_for_splunk_directory }}'
+cca_manager_cca_for_splunk_path: '{{ cca_manager_user_dir }}/clones/{{ cca_for_splunk_directory }}'
 cca_python_minor_version: '3.9'
 cca_python_release: '3.9.10'
 cca_ansible_minor_version: '2.12'
@@ -32,7 +32,7 @@ cca_ansible_roles_path: "{{ './roles:~/clones/cca_for_splunk/roles'
                          if
                             post_docker_setup is defined
                         else
-                            './roles:~/main/cca_for_splunk/roles'
+                            './roles:~/data/main/cca_for_splunk/roles'
                         }}"
 
 # CCA for Splunk is a strong supporter of the Mitogen framework as it speeds up

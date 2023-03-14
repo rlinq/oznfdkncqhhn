@@ -17,7 +17,7 @@ splunk_conf_group_settings:
       options:
        - option: 'master_uri'
          value: "{{ cca_splunk_license_manager_uri }}"
-         state: "{{ 'present'
+         state: "{{ 'present'
                     if
                       current_splunk_enterprise_version | default(splunk_enterprise_version) is version('9.0.0', '<=')
                     and
@@ -25,7 +25,7 @@ splunk_conf_group_settings:
                     else
                       'absent' }}"
          comment: >-
-           Deprected value from Splunk version 9.0+
+           deprecated value from Splunk version 9.0+
        - option: 'manager_uri'
          value: "{{ cca_splunk_license_manager_uri }}"
          state: "{{ 'present'

@@ -29,7 +29,7 @@
 
 - name: Issues found in group_vars files, please update before continuing
   ansible.builtin.debug:
-    msg: "Issue number ({{ index}}) - {{ item.reason }}"
+    msg: "Issue number ({{ index }}) - {{ item.reason }}"
   loop:
     - "{{ infrastructure_assert_result_all_summary | default({}) }}"
     - "{{ infrastructure_assert_result_cluster_manager_cluster_c1_summary | default({}) }}"

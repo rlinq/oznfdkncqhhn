@@ -91,60 +91,6 @@
 
       fi
     mode: 400
-  when:
-    - not docker_build | default(false)
-
-- name: Generate a .profile for the user when running in docker env
-  ansible.builtin.copy:
-    dest: "{{ cca_manager_user_dir }}/.profile"
-    backup: true
-    content: |
-      ###############################
-      # enable option with better support window resizing
-      shopt -s checkwinsize
-
-      ###############################
-
-      # prompt setting:
-      GREEN="\[\e[0;32m\]"
-      NONE="\[\e[0;0m\]"
-
-      PS1="${GREEN}\u${NONE}@${GREEN}\h: ${NONE}\w${GREEN} \$ ${NONE}"
-      export PS1
-
-      ###############################
-
-      # settings for history:
-      alias logname='whoami'
-      export PROMPT_COMMAND='echo "$(date "+%Y-%m-%d %H:%M:%S") $(logname):${PWD} $(history 1)" >> ~/.bash-history-$(date "+%Y-%m-%d").log'
-      export HISTCONTROL="ignoreboth"
-
-      ###############################
-
-      # aliases:
-      alias cp='cp -iv'                       # Preferred 'cp' implementation
-      alias mv='mv -iv'                       # Preferred 'mv' implementation
-      alias mkdir='mkdir -pv'                 # Preferred 'mkdir' implementation
-      alias ..='cd ../'                       # Go back 1 directory level
-      alias ...='cd ../../'                   # Go back 2 directory levels
-      alias path='echo -e ${PATH//:/\\n}'
-      alias grep='grep --color=auto'
-
-      # If a user has a .profile_local source it
-      if [[ -f ~/.profile_local ]]; then
-
-        source ~/.profile_local
-
-      fi
-
-      if [[ -f ~/.bashrc ]]; then
-
-        source ~/.bashrc
-
-      fi
-    mode: 400
-  when:
-    - docker_build | default(false)
 
 - name: Get python path
   ansible.builtin.command:
@@ -165,7 +111,7 @@
     state: 'present'
   with_items:
     - { regex: 'ANSIBLE_VAULT_PASSWORD_FILE', value: 'export ANSIBLE_VAULT_PASSWORD_FILE={{ cca_manager_ansible_vault_secret_path }}' }
-    - { regex: 'ANSIBLE_ROLES_PATH', value: 'export ANSIBLE_ROLES_PATH={{ cca_ansible_roles_path }}' }
+    - { regex: 'ANSIBLE_ROLES_PATH', value: 'export ANSIBLE_ROLES_PATH={{ cca_ansible_roles_path }}' }
     - { regex: 'PROFILE_TASKS_TASK_OUTPUT_LIMIT', value: 'export PROFILE_TASKS_TASK_OUTPUT_LIMIT=15' }
     - { regex: 'PROFILE_TASKS_SORT_ORDER', value: 'export PROFILE_TASKS_SORT_ORDER=descending' }
     - { regex: 'ANSIBLE_INTERPRETER_PYTHON', value: 'export ANSIBLE_INTERPRETER_PYTHON=auto_silent' }

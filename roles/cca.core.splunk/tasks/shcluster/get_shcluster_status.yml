@@ -106,11 +106,11 @@
 
 - name: Set fact of current captain
   ansible.builtin.set_fact:
-    current_shcluster_captain: "{{ shcluster_captain.stdout }}"
+    current_shcluster_captain: "{{ shcluster_captain.stdout }}"
 
 - name: Store file on search head cluster captain
   ansible.builtin.file:
-    path: "{{ searchhead_captain }}"
+    path: "{{ searchhead_captain }}"
     state: touch
     mode: '664'
   when:

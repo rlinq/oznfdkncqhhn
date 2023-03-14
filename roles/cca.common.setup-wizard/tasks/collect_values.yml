@@ -11,39 +11,6 @@
 #
 # Release: 2023.1.1
 
-- name: Set base path for repo
-  ansible.builtin.set_fact:
-    repo_base_path: "{{ cca_environment.default_repo_base_path }}"
-
-- name: Prompt for a directory name where to store Splunk CCA Infrastructure config, default {{ cca_environment.default_infra_repo_name }}
-  ansible.builtin.pause:
-    prompt: "Enter directory name in which to save the infra config ({{ cca_environment.default_infra_repo_name }})"
-  register: wizard_infra_repo_name
-
-- name: Set infra repo path
-  ansible.builtin.set_fact:
-    infra_repo_path: "{{ cca_environment.cca_infra_repo_base_path + '/' + cca_environment.default_infra_repo_name if wizard_infra_repo_name.user_input | length == 0 else cca_environment.cca_infra_repo_base_path + '/' + wizard_infra_repo_name.user_input }}"
-
-- ansible.builtin.set_fact:
-    absolute_infra_repo_path: "{{ infra_repo_path }}"
-
-- name: Prompt for a directory name where to store Splunk CCA Onboarding config, default {{ cca_environment.default_onboarding_repo_name }}
-  ansible.builtin.pause:
-    prompt: "Enter directory name in which to save the onboarding config ({{ cca_environment.default_onboarding_repo_name }})"
-  register: wizard_onboarding_repo_name
-
-- name: Set onboarding repo path
-  ansible.builtin.set_fact:
-    onboarding_repo_path: "{{ cca_environment.cca_onboarding_repo_base_path + '/' + cca_environment.default_onboarding_repo_name if wizard_onboarding_repo_name.user_input | length == 0 else cca_environment.cca_onboarding_repo_base_path + '/' + wizard_onboarding_repo_name.user_input }}"
-
-- name: Check uniqueness of infra and onboarding directory
-  ansible.builtin.assert:
-    that:
-      - infra_repo_path != onboarding_repo_path
-    fail_msg:
-      Error, the directory name of both infra and onboarding are the same,
-      please change one of these directories name.
-
 - name: Prompt for environment name where to store initial templates
   ansible.builtin.pause:
     prompt: "Enter a environment name without space characters ({{ cca_environment.default_environment_dir }})"
@@ -52,36 +19,19 @@
 - ansible.builtin.set_fact:
     environment_dir: "{{ cca_environment.default_environment_dir if wizard_environment.user_input | length == 0 else wizard_environment.user_input }}"
 
-- name: Check if the environments path already exists
-  ansible.builtin.stat:
-    path: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"
-  register: stat_cca_splunk_secrets
-
-- name: Get vars from cca_splunk_secrets if it exists
-  include_vars:
-    file: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets"
-    name: vars_current_wizard
-  when:
-    - stat_cca_splunk_secrets.stat.exists
-
 - ansible.builtin.set_fact:
-   cca_splunk_secret_path: "{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all"
+   cca_splunk_secret_path: "{{ cca_environment.infrastructure_repo_dir }}/environments/{{ environment_dir }}/group_vars/all"
 
 - ansible.builtin.set_fact:
    cca_splunk_secret_file: "{{ cca_splunk_secret_path }}/cca_splunk_secrets"
 
-- name: Set fact if depending on existence of current cca_splunk_secrets
-  ansible.builtin.set_fact:
-    password_type: "{% if stat_cca_splunk_secrets.stat.exists %}the current{% else %}a random{% endif %}"
-    creation_type: "{% if stat_cca_splunk_secrets.stat.exists %}new{% else %}existing{% endif %}"
-
 - name: Set splunk secret to an existing one or new
   ansible.builtin.set_fact:
-    tmp_splunk_secret: "{% if stat_cca_splunk_secrets.stat.exists %}{{ vars_current_wizard.cca_splunk_secret }}{% else %}{{ cca_environment.random_splunk_secret }}{% endif %}"
+    tmp_splunk_secret: "{{ cca_environment.random_splunk_secret }}"
 
 - name: Accept random splunk secret or provide your own
   ansible.builtin.pause:
-    prompt: "Press enter for {{ password_type }} secret or enter an {{ creation_type }} one that is exactly 254 character, ({{ tmp_splunk_secret }})"
+    prompt: "Press enter for random secret or enter an existing one that is exactly 254 character, ({{ tmp_splunk_secret }})"
   register: wizard_splunk_secret
 
 - name: Assert length of Splunk secret
@@ -108,9 +58,9 @@
     state: '{{ item.type }}'
     mode: '0755'
   loop:
-    - { type: 'directory', path: '{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all' }
-    - { type: 'touch', path: '{{ infra_repo_path }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets' }
-    - { type: 'directory', path: '{{ onboarding_repo_path }}/environments/{{ environment_dir }}/group_vars/all' }
+    - { type: 'directory', path: '{{ cca_environment.infrastructure_repo_dir }}/environments/{{ environment_dir }}/group_vars/all' }
+    - { type: 'touch', path: '{{ cca_environment.infrastructure_repo_dir }}/environments/{{ environment_dir }}/group_vars/all/cca_splunk_secrets' }
+    - { type: 'directory', path: '{{ cca_environment.onboarding_repo_dir }}/environments/{{ environment_dir }}/group_vars/all' }
 
 - name: Save the clear text secret as an ansible vault in infra repo
   ansible.builtin.lineinfile:
@@ -128,13 +78,3 @@
     path: "{{ vars.cca_splunk_secret_file }}"
     line: "cca_splunk_secret_sha256: '{{ splunk_secret_checksum.stdout }}'"
     regex: '^cca_splunk_secret_sha256:'
-
-- name: Get number of index clusters to collect secrets for
-  ansible.builtin.pause:
-    prompt: "Enter a number between 0 to 9 to provide random_pass4SymmKey for the index cluster setup"
-  register: index_clusters_input
-
-- name: Get number of search head clusters to collect secrets for
-  ansible.builtin.pause:
-    prompt: "Enter a number between 0 to 9 to provide random_pass4SymmKey for the search head cluster setup"
-  register: searchhead_clusters_input

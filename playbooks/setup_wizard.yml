@@ -1,4 +1,4 @@
-# MENU_DESC=Setup Wizard
+# MENU_DESC=CCA Infrastructure and Onboarding Repo Setup Wizard
 # REPO_TYPE=main
 # EXTRA_VARS=
 - name: Wizard - Setup and aid user to copy and create necessary directories
@@ -15,12 +15,10 @@
     splunk_enterprise_version: "9.0.4"
 
     cca_environment:
-      default_infra_repo_name: 'cca_splunk_infrastructure'
-      default_onboarding_repo_name: 'cca_splunk_onboarding'
-      default_repo_base_path: "{{ cca_repo_base }}"
-      cca_repo_path: "{{ lookup('ansible.builtin.env', 'CCA_REPO_PATH') | default(cca_repo_base, True) }}"
-      cca_infra_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_INFRA_REPO_BASE_PATH') | default(cca_repo_base, True) }}"
-      cca_onboarding_repo_base_path: "{{ lookup('ansible.builtin.env', 'CCA_ONBOARDING_REPO_BASE_PATH') | default(cca_repo_base, True) }}"
+      infrastructure_repo_dir: '{{ user_home }}/data/main/cca_splunk_infrastructure'
+      onboarding_repo_dir: '{{ user_home }}/data/main/cca_splunk_onboarding'
+      repo_base_path: "{{ cca_repo_base }}"
+      cca_repo_path: "{{ user_home }}/clones/cca_for_splunk"
       default_environment_dir: 'cca_lab'
       random_splunk_secret: "{{ lookup('community.general.random_string', base64=True, length=254) }}"
       cca_splunk_secrets:
@@ -64,18 +62,6 @@
         name: cca.common.setup-wizard
         tasks_from:
           collect_values.yml
-
-    - name: Prompt for overwriting directories if they exists
-      ansible.builtin.pause:
-        prompt: >-
-         IMPORTANT. The selected directories already exists, if you select yes all files will be
-         replaced with CCA template files.
-         After the file copy you will be prompted to update stored secrets.
-         If you select no, only prompted updates of stored secret updates will be processed.
-         Would you like to replace your files with template versions (yes/no)?"
-      register: copy_cca_template_files
-      when:
-        - stat_cca_splunk_secrets.stat.exists
 
     - name: Setup directories and copy template files
       ansible.builtin.include_role:

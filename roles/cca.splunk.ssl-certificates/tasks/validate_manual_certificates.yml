@@ -38,7 +38,7 @@
 
 - name: "DRY RUN - Perform a final {{ cert_type }} cert build"
   ansible.builtin.template:
-    src: etc/auth/certs/build_final_cert.j2
+    src: ../templates/etc/auth/certs/build_final_cert.j2
     dest: '{{ cca_splunk_certs_path }}/{{ cert_file_name }}'
   check_mode: true
   register: final_cert_file_result

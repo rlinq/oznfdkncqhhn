@@ -1,8 +1,8 @@
 # Playbook to handle validation
 #
 # REPO_TYPE=infra
-# MENU_DESC=Validate CCA Parameters and files
-# EXTRA_VARS=validate_cca_infrastructure_files(false)
+# MENU_DESC=Validate CCA Infrastructure Parameters and files
+# EXTRA_VARS
 
 - name: Initialize playbook run on manager server - Monitoring Consoles
   hosts: manager
@@ -18,4 +18,4 @@
         tasks_from:
           initialize.yml
       vars:
-        target: "monitoring_consoles"
+        target: "cca_infastructure_settings"

@@ -64,7 +64,7 @@
     fail_msg: >-
       Decryption of private key failed due to this error.
 
-      {{ status_privkey_sha256sum.stderr }}
+      {{ status_privkey_sha256sum.stderr }}
 
       Rerun playbook with extra_vars, set hide_password to false.
       Possible a miss match of ssl passwords for.

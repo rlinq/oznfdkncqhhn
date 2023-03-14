@@ -190,7 +190,7 @@ Increased readability of Ansible terminal output, yaml formatted. Add
 
 ```
 export ANSIBLE_PRIVATE_KEY_FILE=~/secrets/splunk_cca_ansible_gcp.pem
-export ANSIBLE_ROLES_PATH=./roles:~/master/cca_for_splunk/roles
+export ANSIBLE_ROLES_PATH=./roles:~/main/cca_for_splunk/roles
 export ANSIBLE_STRATEGY_PLUGINS=~/tools/mitogen-0.3.2/ansible_mitogen/plugins/strategy
 export ANSIBLE_STRATEGY="mitogen_linear"
 export ANSIBLE_CALLBACKS_ENABLED="ansible.posix.profile_tasks"
