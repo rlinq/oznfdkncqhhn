@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 
 set -o errexit
@@ -46,6 +47,7 @@ CcaRepoShort="cca"
 ScriptParams=$@
 Setup=false
 EnforceMultiplexer=true
+
 
 sed_cmd="sed"
 CcaRunId=\"cca_runid\":\"${ProcessPid}\"
@@ -231,8 +233,8 @@ cat <<EOF
   infrastructure automation as well as Splunk onboarding
   automation.
 
-* This script will now exit here and if you would like to
-  configure your environment run the script again with
+* This script will exit now. If you would like to configure
+  your environment run the script again with
 
   ./cca_control --setup
 EOF
@@ -789,10 +791,11 @@ function select_playbook() {
   cd ${ScriptPath}
 
     Playbooks=$(find ${ScriptPath}/playbooks ${CcaRepoPath}/playbooks -maxdepth 1\
+
 	            -name "*.yml"\
                     | grep -e ".*.yml"\
                     | xargs grep "REPO_TYPE=${repo_type}"\
-                    | awk -F: '{ print $1 }' | sort -un )
+                    | awk -F: '{ print $1 }' | sort -nu )
 
     CommonPath="$(greatest_common_path)"
     CommonPath=$(${sed_cmd} "s|/${CcaRepo}||g" <<< ${CommonPath})
@@ -1316,6 +1319,9 @@ fi
 select_hosts
 ${Debug} && echo "${SelectedHosts}"
 
+
+
+
 # Option to add extra variables to playbook execution
 get_extra_vars
 
@@ -1323,3 +1329,4 @@ get_extra_vars
 
 # Summary of what will be executed
 run_playbook
+
